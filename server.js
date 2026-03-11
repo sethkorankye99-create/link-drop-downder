@@ -30,7 +30,10 @@ app.get('/api/download', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 API is live at http://localhost:${PORT}`);
-    console.log(`🔗 Test it here: http://localhost:3000/api/download?url=YOUR_LINK_HERE`);
+
+// Use the port Railway gives us, or default to 3000 for local testing
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
 });
