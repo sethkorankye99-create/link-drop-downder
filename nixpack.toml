@@ -1,0 +1,8 @@
+[providers]
+python = true
+
+[build]
+cmds = ["npm ci"]
+
+[start]
+cmd = "node server.js"
