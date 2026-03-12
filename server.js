@@ -1,7 +1,7 @@
 const express = require('express');
 const ytDlp = require('yt-dlp-exec');
 const app = express();
-const PORT = 3000;
+
 
 app.get('/api/download', async (req, res) => {
     const videoUrl = req.query.url;
