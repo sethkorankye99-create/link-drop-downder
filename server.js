@@ -1,39 +1,45 @@
-const express = require('express');
-const ytDlp = require('yt-dlp-exec');
+// server.js
+const express = require("express");
+const bodyParser = require("body-parser");
 
 const app = express();
 
-app.get('/api/download', async (req, res) => {
-    const videoUrl = req.query.url;
+// Middleware
+app.use(bodyParser.json());
 
-    if (!videoUrl) {
-        return res.status(400).send("Please provide a URL in the address bar!");
-    }
-
-    try {
-        // This is the updated part with the User-Agent
-        const info = await ytDlp(videoUrl, {
-            dumpSingleJson: true,
-            noWarnings: true,
-            noCheckCertificates: true,
-            addHeader: [
-                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
-            ]
-        });
-
-        res.json({
-            title: info.title,
-            download: info.url
-        });
-
-    } catch (error) {
-        console.error(error); // This helps you see the real error in Render logs
-        res.status(500).send("Failed to extract video: " + error.message);
-    }
+// Root route (optional, just to avoid "Cannot GET /")
+app.get("/", (req, res) => {
+  res.send("Video extraction API is running!");
 });
 
-const PORT = process.env.PORT || 3000;
+// Example API endpoint: POST /extract
+// You send { "url": "https://example.com/video" }
+app.post("/extract", async (req, res) => {
+  const { url } = req.body;
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
+  if (!url) {
+    return res.status(400).json({ error: "No URL provided" });
+  }
+
+  try {
+    // TODO: Replace this with your actual extraction logic
+    // For example, call a library or service that fetches video metadata
+    const fakeResult = {
+      originalUrl: url,
+      title: "Sample Video",
+      duration: "3:45",
+      downloadLink: "https://cdn.example.com/video.mp4",
+    };
+
+    res.json(fakeResult);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to extract video" });
+  }
+});
+
+// Render requires you to use process.env.PORT
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
