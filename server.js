@@ -1,48 +1,59 @@
-// server.js
 const express = require("express");
-const app = express();
+const ytDlp = require("yt-dlp-exec");
 
-// Middleware for JSON
+const app = express();
 app.use(express.json());
 
-// Root route
+// Home route
 app.get("/", (req, res) => {
-  res.send("Video extraction API is running!");
+  res.send("Downloader API is running");
 });
 
-// POST endpoint (for tools like curl/Postman)
-app.post("/extract", (req, res) => {
-  const { url } = req.body;
-  if (!url) {
-    return res.status(400).json({ error: "No URL provided" });
-  }
+// Universal download endpoint
+app.get("/api/download", async (req, res) => {
 
-  // Replace with your actual extraction logic
-  res.json({
-    method: "POST",
-    originalUrl: url,
-    message: "Video extracted successfully (fake data)",
-  });
-});
-
-// NEW: GET endpoint so you can test in browser
-// Example: https://your-app.onrender.com/extract?url=https://youtu.be/abc123
-app.get("/extract", (req, res) => {
   const url = req.query.url;
+
   if (!url) {
-    return res.status(400).json({ error: "No URL provided" });
+    return res.status(400).json({
+      error: "Please provide a video URL"
+    });
   }
 
-  // Replace with your actual extraction logic
-  res.json({
-    method: "GET",
-    originalUrl: url,
-    message: "Video extracted successfully (fake data)",
-  });
+  try {
+
+    const info = await ytDlp(url, {
+      dumpSingleJson: true
+    });
+
+    // Get available formats
+    const formats = info.formats
+      .filter(f => f.ext === "mp4" && f.url)
+      .map(f => ({
+        quality: f.format_note || f.height + "p",
+        url: f.url
+      }));
+
+    res.json({
+      title: info.title,
+      thumbnail: info.thumbnail,
+      duration: info.duration,
+      platform: info.extractor,
+      downloads: formats.slice(0, 5)
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      error: "Failed to extract video"
+    });
+
+  }
+
 });
 
-// Render requires process.env.PORT
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
