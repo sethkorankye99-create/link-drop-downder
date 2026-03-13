@@ -1,59 +1,62 @@
+// server.js
 const express = require("express");
-const ytDlp = require("yt-dlp-exec");
+const ytdl = require("ytdl-core");
 
 const app = express();
 app.use(express.json());
 
-// Home route
+// Root route
 app.get("/", (req, res) => {
-  res.send("Downloader API is running");
+  res.send("Video extraction API is running!");
 });
 
-// Universal download endpoint
-app.get("/api/download", async (req, res) => {
-
-  const url = req.query.url;
-
-  if (!url) {
-    return res.status(400).json({
-      error: "Please provide a video URL"
-    });
-  }
+// POST endpoint
+app.post("/extract", async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: "No URL provided" });
 
   try {
-
-    const info = await ytDlp(url, {
-      dumpSingleJson: true
-    });
-
-    // Get available formats
-    const formats = info.formats
-      .filter(f => f.ext === "mp4" && f.url)
-      .map(f => ({
-        quality: f.format_note || f.height + "p",
-        url: f.url
-      }));
-
+    const info = await ytdl.getInfo(url);
     res.json({
-      title: info.title,
-      thumbnail: info.thumbnail,
-      duration: info.duration,
-      platform: info.extractor,
-      downloads: formats.slice(0, 5)
+      title: info.videoDetails.title,
+      lengthSeconds: info.videoDetails.lengthSeconds,
+      author: info.videoDetails.author.name,
+      formats: info.formats.map(f => ({
+        quality: f.qualityLabel,
+        mimeType: f.mimeType,
+        url: f.url
+      }))
     });
-
-  } catch (error) {
-
-    res.status(500).json({
-      error: "Failed to extract video"
-    });
-
+  } catch (err) {
+    res.status(500).json({ error: "Failed to extract video", details: err.message });
   }
-
 });
 
-const PORT = process.env.PORT || 3000;
+// GET endpoint for browser testing
+// Example: https://your-app.onrender.com/extract?url=https://youtu.be/abc123
+app.get("/extract", async (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).json({ error: "No URL provided" });
 
-app.listen(PORT, "0.0.0.0", () => {
+  try {
+    const info = await ytdl.getInfo(url);
+    res.json({
+      title: info.videoDetails.title,
+      lengthSeconds: info.videoDetails.lengthSeconds,
+      author: info.videoDetails.author.name,
+      formats: info.formats.map(f => ({
+        quality: f.qualityLabel,
+        mimeType: f.mimeType,
+        url: f.url
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to extract video", details: err.message });
+  }
+});
+
+// Render requires process.env.PORT
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
