@@ -1,44 +1,47 @@
 // server.js
 const express = require("express");
-const bodyParser = require("body-parser");
-
 const app = express();
 
-// Middleware
-app.use(bodyParser.json());
+// Middleware for JSON
+app.use(express.json());
 
-// Root route (optional, just to avoid "Cannot GET /")
+// Root route
 app.get("/", (req, res) => {
   res.send("Video extraction API is running!");
 });
 
-// Example API endpoint: POST /extract
-// You send { "url": "https://example.com/video" }
-app.post("/extract", async (req, res) => {
+// POST endpoint (for tools like curl/Postman)
+app.post("/extract", (req, res) => {
   const { url } = req.body;
-
   if (!url) {
     return res.status(400).json({ error: "No URL provided" });
   }
 
-  try {
-    // TODO: Replace this with your actual extraction logic
-    // For example, call a library or service that fetches video metadata
-    const fakeResult = {
-      originalUrl: url,
-      title: "Sample Video",
-      duration: "3:45",
-      downloadLink: "https://cdn.example.com/video.mp4",
-    };
-
-    res.json(fakeResult);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to extract video" });
-  }
+  // Replace with your actual extraction logic
+  res.json({
+    method: "POST",
+    originalUrl: url,
+    message: "Video extracted successfully (fake data)",
+  });
 });
 
-// Render requires you to use process.env.PORT
+// NEW: GET endpoint so you can test in browser
+// Example: https://your-app.onrender.com/extract?url=https://youtu.be/abc123
+app.get("/extract", (req, res) => {
+  const url = req.query.url;
+  if (!url) {
+    return res.status(400).json({ error: "No URL provided" });
+  }
+
+  // Replace with your actual extraction logic
+  res.json({
+    method: "GET",
+    originalUrl: url,
+    message: "Video extracted successfully (fake data)",
+  });
+});
+
+// Render requires process.env.PORT
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
