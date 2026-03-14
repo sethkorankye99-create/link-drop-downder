@@ -56,7 +56,8 @@ app.get("/extract", async (req, res) => {
 });
 
 // Render requires process.env.PORT
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000; // Render uses 10000 by default
+
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
