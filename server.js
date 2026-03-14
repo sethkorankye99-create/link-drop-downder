@@ -1,6 +1,6 @@
 // server.js
 const express = require("express");
-const ytdl = require("ytdl-core");
+const ytDlp = require("yt-dlp-exec");
 
 const app = express();
 app.use(express.json());
@@ -16,16 +16,27 @@ app.post("/extract", async (req, res) => {
   if (!url) return res.status(400).json({ error: "No URL provided" });
 
   try {
-    const info = await ytdl.getInfo(url);
-    res.json({
-      title: info.videoDetails.title,
-      lengthSeconds: info.videoDetails.lengthSeconds,
-      author: info.videoDetails.author.name,
-      formats: info.formats.map(f => ({
-        quality: f.qualityLabel,
-        mimeType: f.mimeType,
+    const info = await ytDlp(url, {
+      dumpSingleJson: true,
+      noWarnings: true,
+      preferFreeFormats: true
+    });
+
+    // Extract useful formats
+    const downloads = info.formats
+      .filter(f => f.ext === "mp4" && f.url)
+      .map(f => ({
+        quality: f.qualityLabel || (f.height ? `${f.height}p` : "unknown"),
+        mimeType: f.mimeType || "video/mp4",
         url: f.url
       }))
+      .slice(0, 6); // limit results
+
+    res.json({
+      title: info.title,
+      lengthSeconds: info.duration,
+      author: info.uploader,
+      formats: downloads
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to extract video", details: err.message });
@@ -39,16 +50,27 @@ app.get("/extract", async (req, res) => {
   if (!url) return res.status(400).json({ error: "No URL provided" });
 
   try {
-    const info = await ytdl.getInfo(url);
-    res.json({
-      title: info.videoDetails.title,
-      lengthSeconds: info.videoDetails.lengthSeconds,
-      author: info.videoDetails.author.name,
-      formats: info.formats.map(f => ({
-        quality: f.qualityLabel,
-        mimeType: f.mimeType,
+    const info = await ytDlp(url, {
+      dumpSingleJson: true,
+      noWarnings: true,
+      preferFreeFormats: true
+    });
+
+    // Extract useful formats
+    const downloads = info.formats
+      .filter(f => f.ext === "mp4" && f.url)
+      .map(f => ({
+        quality: f.qualityLabel || (f.height ? `${f.height}p` : "unknown"),
+        mimeType: f.mimeType || "video/mp4",
         url: f.url
       }))
+      .slice(0, 6); // limit results
+
+    res.json({
+      title: info.title,
+      lengthSeconds: info.duration,
+      author: info.uploader,
+      formats: downloads
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to extract video", details: err.message });
